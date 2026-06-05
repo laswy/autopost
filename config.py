@@ -1,0 +1,30 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
+
+TIKTOK_ACCESS_TOKEN  = os.getenv("TIKTOK_ACCESS_TOKEN", "")
+TIKTOK_CLIENT_KEY    = os.getenv("TIKTOK_CLIENT_KEY", "")
+TIKTOK_CLIENT_SECRET = os.getenv("TIKTOK_CLIENT_SECRET", "")
+TIKTOK_REFRESH_TOKEN = os.getenv("TIKTOK_REFRESH_TOKEN", "")
+
+_ids = os.getenv("ALLOWED_USER_IDS", "")
+ALLOWED_USER_IDS: list[int] = [int(x) for x in _ids.split(",") if x.strip()]
+
+DEFAULT_VOICE = os.getenv("DEFAULT_VOICE", "vi-VN-HoaiMyNeural")
+DEFAULT_GENRE = os.getenv("DEFAULT_GENRE", "romance")
+
+# Thư mục
+BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+WORK_DIR   = os.path.join(BASE_DIR, "work_dir")
+OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+
+os.makedirs(ASSETS_DIR, exist_ok=True)
+os.makedirs(WORK_DIR,   exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+FONT_PATH = os.path.join(ASSETS_DIR, "font.ttf")
