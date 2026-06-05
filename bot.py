@@ -32,6 +32,7 @@ from telegram.ext import (
 )
 
 import config
+from config import AI_PROVIDER
 from skills.nna_writer import write_story, generate_hook, generate_caption
 from skills.story_pipeline import run_pipeline
 from skills.tiktok_upload import uploader
@@ -226,8 +227,10 @@ async def _run_story_flow(update: Update, ctx: ContextTypes.DEFAULT_TYPE,
 # ── Handlers ───────────────────────────────────────────────────────────────────
 @restricted
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    provider_label = {"anthropic": "☁️ Claude (Anthropic)", "groq": "⚡ Llama (Groq — free)"}.get(AI_PROVIDER, "❓ Chưa cấu hình")
     text = (
         "👋 *AutoPost Bot* — Viết truyện & đăng TikTok tự động!\n\n"
+        f"🧠 AI đang dùng: *{provider_label}*\n\n"
         "📌 *Lệnh chính:*\n"
         "• `/story <nội dung>` — Viết truyện phong cách NNA rồi tạo video\n"
         "• `/poem <nội dung>` — Viết thơ phong cách NPV rồi tạo video\n\n"
@@ -326,8 +329,13 @@ async def on_error(update: object, ctx: ContextTypes.DEFAULT_TYPE):
 def main():
     if not config.TELEGRAM_BOT_TOKEN:
         raise SystemExit("❌ TELEGRAM_BOT_TOKEN chưa được thiết lập trong .env")
-    if not config.ANTHROPIC_API_KEY:
-        raise SystemExit("❌ ANTHROPIC_API_KEY chưa được thiết lập trong .env")
+    if config.AI_PROVIDER == "none":
+        raise SystemExit(
+            "❌ Chưa cấu hình AI provider. Thêm 1 trong 2 vào .env:\n"
+            "   ANTHROPIC_API_KEY=...  (console.anthropic.com)\n"
+            "   GROQ_API_KEY=...       (console.groq.com — miễn phí)"
+        )
+    log.info(f"🤖 AI provider: {config.AI_PROVIDER.upper()}")
 
     app = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
 

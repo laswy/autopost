@@ -5,6 +5,19 @@ load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
+GROQ_API_KEY       = os.getenv("GROQ_API_KEY", "")
+
+# Provider được chọn tự động: anthropic > groq
+# Có thể ghi đè bằng AI_PROVIDER=groq hoặc AI_PROVIDER=anthropic
+_provider_env = os.getenv("AI_PROVIDER", "").lower()
+if _provider_env in ("anthropic", "groq"):
+    AI_PROVIDER = _provider_env
+elif ANTHROPIC_API_KEY:
+    AI_PROVIDER = "anthropic"
+elif GROQ_API_KEY:
+    AI_PROVIDER = "groq"
+else:
+    AI_PROVIDER = "none"
 
 TIKTOK_ACCESS_TOKEN  = os.getenv("TIKTOK_ACCESS_TOKEN", "")
 TIKTOK_CLIENT_KEY    = os.getenv("TIKTOK_CLIENT_KEY", "")
