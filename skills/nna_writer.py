@@ -3,6 +3,7 @@ NNA Writer skill — viết truyện/thơ phong cách NNA/NPV.
 Hỗ trợ: Anthropic Claude (ưu tiên) hoặc Groq + Llama (miễn phí).
 """
 
+import subprocess
 from config import AI_PROVIDER, ANTHROPIC_API_KEY, GROQ_API_KEY
 
 _SYSTEM_PROMPT = """Bạn là người kể chuyện & làm thơ nắm vững hai trường phái:
@@ -63,17 +64,41 @@ def _call_groq(system: str, user: str, max_tokens: int = 4096, fast: bool = Fals
     return resp.choices[0].message.content
 
 
+def _call_claude_cli(system: str, user: str, max_tokens: int = 4096, fast: bool = False) -> str:
+    """
+    Gọi Claude qua CLI (`claude -p`).
+    Yêu cầu: Claude Code đã cài và đăng nhập (claude.ai/code hoặc macOS app).
+    Dùng subscription Claude Pro — không cần API key riêng.
+    """
+    full_prompt = f"{system}\n\n---\n\n{user}"
+    result = subprocess.run(
+        ["claude", "-p", full_prompt],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Claude CLI lỗi: {result.stderr.strip() or 'unknown error'}")
+    output = result.stdout.strip()
+    if not output:
+        raise RuntimeError("Claude CLI không trả về nội dung. Kiểm tra `claude -p 'test'` trong terminal.")
+    return output
+
+
 def _call_ai(system: str, user: str, max_tokens: int = 4096, fast: bool = False) -> str:
     """Gọi AI provider được cấu hình, raise RuntimeError nếu chưa cấu hình."""
     if AI_PROVIDER == "anthropic":
         return _call_anthropic(system, user, max_tokens, fast)
     elif AI_PROVIDER == "groq":
         return _call_groq(system, user, max_tokens, fast)
+    elif AI_PROVIDER == "claude-cli":
+        return _call_claude_cli(system, user, max_tokens, fast)
     else:
         raise RuntimeError(
-            "Chưa cấu hình AI provider.\n"
-            "• Thêm ANTHROPIC_API_KEY=... vào .env  (console.anthropic.com)\n"
-            "• Hoặc GROQ_API_KEY=...  vào .env  (console.groq.com — miễn phí)"
+            "Chưa cấu hình AI provider. Chọn 1 trong 3 cách:\n"
+            "• Cài Claude Code + đăng nhập → tự động nhận diện\n"
+            "• Thêm GROQ_API_KEY=... vào .env  (console.groq.com — miễn phí)\n"
+            "• Thêm ANTHROPIC_API_KEY=... vào .env  (console.anthropic.com)"
         )
 
 

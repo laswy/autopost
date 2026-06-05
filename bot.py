@@ -227,7 +227,11 @@ async def _run_story_flow(update: Update, ctx: ContextTypes.DEFAULT_TYPE,
 # ── Handlers ───────────────────────────────────────────────────────────────────
 @restricted
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    provider_label = {"anthropic": "☁️ Claude (Anthropic)", "groq": "⚡ Llama (Groq — free)"}.get(AI_PROVIDER, "❓ Chưa cấu hình")
+    provider_label = {
+        "anthropic":  "☁️ Claude API (Anthropic)",
+        "groq":       "⚡ Llama 3.3 (Groq — free)",
+        "claude-cli": "🍎 Claude CLI (macOS app)",
+    }.get(AI_PROVIDER, "❓ Chưa cấu hình")
     text = (
         "👋 *AutoPost Bot* — Viết truyện & đăng TikTok tự động!\n\n"
         f"🧠 AI đang dùng: *{provider_label}*\n\n"
@@ -331,9 +335,10 @@ def main():
         raise SystemExit("❌ TELEGRAM_BOT_TOKEN chưa được thiết lập trong .env")
     if config.AI_PROVIDER == "none":
         raise SystemExit(
-            "❌ Chưa cấu hình AI provider. Thêm 1 trong 2 vào .env:\n"
-            "   ANTHROPIC_API_KEY=...  (console.anthropic.com)\n"
-            "   GROQ_API_KEY=...       (console.groq.com — miễn phí)"
+            "❌ Chưa cấu hình AI provider. Chọn 1 trong 3:\n"
+            "   1. Cài Claude Code CLI + đăng nhập  (claude.ai/code)\n"
+            "   2. GROQ_API_KEY=...   trong .env  (console.groq.com — miễn phí)\n"
+            "   3. ANTHROPIC_API_KEY= trong .env  (console.anthropic.com)"
         )
     log.info(f"🤖 AI provider: {config.AI_PROVIDER.upper()}")
 
