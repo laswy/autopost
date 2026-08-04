@@ -1,6 +1,7 @@
 python-telegram-bot==21.5
 anthropic>=0.34.0  # tùy chọn — nếu dùng Claude
 groq>=0.11.0       # tùy chọn — nếu dùng Groq (miễn phí)
+openai>=1.40.0     # tùy chọn — OpenAI TTS (gpt-4o-mini-tts) + GPT lesson generation
 edge-tts>=6.1.9
 moviepy==1.0.3
 Pillow>=10.0.0

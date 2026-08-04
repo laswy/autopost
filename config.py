@@ -21,6 +21,16 @@ else:
     import shutil
     AI_PROVIDER = "claude-cli" if shutil.which("claude") else "none"
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
+# TTS provider: openai (gpt-4o-mini-tts) | edge (edge-tts miễn phí)
+# Tự động chọn openai nếu có key, fallback sang edge-tts
+_tts_env = os.getenv("TTS_PROVIDER", "").lower()
+if _tts_env in ("openai", "edge"):
+    TTS_PROVIDER = _tts_env
+else:
+    TTS_PROVIDER = "openai" if OPENAI_API_KEY else "edge"
+
 TIKTOK_ACCESS_TOKEN  = os.getenv("TIKTOK_ACCESS_TOKEN", "")
 TIKTOK_CLIENT_KEY    = os.getenv("TIKTOK_CLIENT_KEY", "")
 TIKTOK_CLIENT_SECRET = os.getenv("TIKTOK_CLIENT_SECRET", "")
