@@ -137,7 +137,7 @@ def create_frame(seg: dict, username: str = "") -> "Image":
 
 def make_clip(seg: dict, username: str = ""):
     """Tạo MoviePy clip từ 1 segment."""
-    from moviepy.editor import ImageClip, AudioFileClip
+    from moviepy import ImageClip, AudioFileClip
     from pathlib import Path
 
     frame_path = str(Path(seg["mp3"]).parent / f"frame_{seg['id']}.png")
@@ -145,17 +145,17 @@ def make_clip(seg: dict, username: str = ""):
     img.save(frame_path)
 
     audio = AudioFileClip(seg["mp3"])
-    clip  = ImageClip(frame_path).set_duration(audio.duration).set_audio(audio)
+    clip  = ImageClip(frame_path).with_duration(audio.duration).with_audio(audio)
     return clip
 
 
 # ── Step 5+6: Export ──────────────────────────────────────────────────────────
 
 def export_video(segments: list[dict], job_id: str, username: str = "") -> str:
-    from moviepy.editor import concatenate_videoclips
+    from moviepy import concatenate_videoclips
 
     clips = [make_clip(seg, username) for seg in segments]
-    final = concatenate_videoclips(clips, method="compose")
+    final = concatenate_videoclips(clips, method="chain")
 
     out_path = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
     final.write_videofile(

@@ -229,7 +229,7 @@ _FRAME_MAKERS = {
 
 
 def make_clip(seg: dict, job_dir: Path):
-    from moviepy.editor import ImageClip, AudioFileClip
+    from moviepy import ImageClip, AudioFileClip
 
     maker      = _FRAME_MAKERS.get(seg["type"], make_hook_frame)
     img        = maker(seg)
@@ -237,7 +237,7 @@ def make_clip(seg: dict, job_dir: Path):
     img.save(frame_path)
 
     audio = AudioFileClip(seg["mp3"])
-    return ImageClip(frame_path).set_duration(audio.duration).set_audio(audio)
+    return ImageClip(frame_path).with_duration(audio.duration).with_audio(audio)
 
 
 # ── Full pipeline ──────────────────────────────────────────────────────────────
@@ -289,10 +289,10 @@ async def run_lesson_pipeline(
 
 
 def _export_video(segments: list[dict], job_id: str, job_dir: Path) -> str:
-    from moviepy.editor import concatenate_videoclips
+    from moviepy import concatenate_videoclips
 
     clips = [make_clip(seg, job_dir) for seg in segments]
-    final = concatenate_videoclips(clips, method="compose")
+    final = concatenate_videoclips(clips, method="chain")
     out   = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
     final.write_videofile(
         out, fps=FPS, codec="libx264",
