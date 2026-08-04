@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+output/
+work_dir/
+*.mp4
+*.mp3
+*.png
