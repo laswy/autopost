@@ -22,7 +22,7 @@ spec.json:
         {"who": "narrator", "text": "...", "card": {"kind": "grid|note|image", ...}}
       ]
     }
-look: man | woman | old_woman. clothes: hoodie | tee | apron | shirt.
+room: bep | phong | quan | xuong. look: man | woman | old_woman. clothes: hoodie | tee | apron | shirt.
 """
 
 import asyncio
@@ -64,8 +64,8 @@ def _vignette(img: Image.Image, strength=0.55) -> Image.Image:
 
 
 def background(room: str) -> Image.Image:
-    walls = {"bep": (122, 92, 70), "phong": (62, 96, 118), "quan": (56, 84, 82)}
-    floors = {"bep": (150, 98, 62), "phong": (136, 98, 74), "quan": (152, 98, 56)}
+    walls = {"bep": (122, 92, 70), "phong": (62, 96, 118), "quan": (56, 84, 82), "xuong": (112, 86, 70)}
+    floors = {"bep": (150, 98, 62), "phong": (136, 98, 74), "quan": (152, 98, 56), "xuong": (140, 104, 70)}
     wall, floor = walls.get(room, walls["quan"]), floors.get(room, floors["quan"])
     im = Image.new("RGB", (W * S, H * S), wall)
     d = ImageDraw.Draw(im)
@@ -95,6 +95,20 @@ def background(room: str) -> Image.Image:
         for i, c in enumerate(((190, 80, 60), (230, 190, 90), (90, 140, 100), (200, 120, 70))):
             d.rounded_rectangle([(90 + i * 90) * s, 320 * s, (150 + i * 90) * s, 400 * s], 10 * s, fill=c, outline=OUTLINE, width=6 * s)
         d.rectangle([0, 1020 * s, W * s, 1140 * s], fill=(176, 126, 84), outline=OUTLINE, width=8 * s)             # bàn bếp
+    elif room == "xuong":
+        d.rectangle([60 * s, 300 * s, 1020 * s, 340 * s], fill=(96, 66, 46), outline=OUTLINE, width=7 * s)       # xà treo dụng cụ
+        for i, x in enumerate((120, 260, 400)):                                                              # cưa, búa, thước
+            d.line([(x * s, 340 * s), (x * s, (470 + 40 * (i % 2)) * s)], fill=OUTLINE, width=9 * s)
+            d.rectangle([(x - 30) * s, (470 + 40 * (i % 2)) * s, (x + 30) * s, (520 + 40 * (i % 2)) * s], fill=(176, 176, 182), outline=OUTLINE, width=6 * s)
+        for r in range(3):                                                                                   # giá ghế đẩu bên phải
+            y = 420 + r * 190
+            d.rectangle([700 * s, y * s, 1040 * s, (y + 22) * s], fill=(96, 66, 46), outline=OUTLINE, width=6 * s)
+            for c in range(3):
+                x = 720 + c * 105
+                d.ellipse([x * s, (y - 46) * s, (x + 90) * s, (y - 6) * s], fill=(236, 180, 110), outline=OUTLINE, width=6 * s)
+                d.line([((x + 12) * s), ((y - 12) * s), ((x - 2) * s), (y * s)], fill=OUTLINE, width=6 * s)
+                d.line([((x + 78) * s), ((y - 12) * s), ((x + 92) * s), (y * s)], fill=OUTLINE, width=6 * s)
+        d.polygon([(120 * s, 1100 * s), (200 * s, 1080 * s), (280 * s, 1100 * s), (240 * s, 1150 * s), (160 * s, 1150 * s)], fill=(226, 196, 140))  # đống mạt cưa
     else:  # phong
         d.rectangle([40 * s, 0, 330 * s, 900 * s], fill=(70, 110, 190), outline=OUTLINE, width=9 * s)           # rèm xanh
         for x in (110, 190, 260):
