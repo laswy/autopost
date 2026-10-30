@@ -339,6 +339,43 @@ async def _tts(text, voice, rate, pitch, mp3: Path):
     return words
 
 
+def _words_from_audio(path: Path):
+    """Giọng thu sẵn: tìm đoạn có tiếng theo độ lớn (20ms), dùng làm mốc mở miệng."""
+    import subprocess
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-f", "s16le", "-ac", "1", "-ar", "16000", "-"],
+                         capture_output=True, check=True).stdout
+    x = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768
+    n = 320
+    rms = np.sqrt((x[: len(x) // n * n].reshape(-1, n) ** 2).mean(axis=1))
+    on = rms > max(0.012, rms.max() * 0.08)
+    segs, start = [], None
+    for k, v in enumerate(on):
+        if v and start is None:
+            start = k
+        elif not v and start is not None:
+            segs.append([start * 0.02, k * 0.02]); start = None
+    if start is not None:
+        segs.append([start * 0.02, len(on) * 0.02])
+    merged = []
+    for a, b in segs:
+        if merged and a - merged[-1][1] < 0.09:
+            merged[-1][1] = b
+        else:
+            merged.append([a, b])
+    return [(a, b) for a, b in merged]
+
+
+async def _voice(i, l, chars, work):
+    """Dùng tệp giọng thật nếu dòng có "audio", không thì edge-tts."""
+    if l.get("audio"):
+        import subprocess
+        out = work / f"v{i}.mp3"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", l["audio"], "-ar", "44100", "-ac", "2", str(out)], check=True)
+        return _words_from_audio(out)
+    return await _tts(l["text"], chars[l["who"]]["voice"], l.get("rate", "-2%"),
+                      chars[l["who"]].get("pitch", "+0Hz"), work / f"v{i}.mp3")
+
+
 def _mouth_at(t, words, emo):
     for s, e in words:
         if s - 0.02 <= t <= e + 0.04:
@@ -357,9 +394,7 @@ async def build(spec: dict, out_path: str) -> dict:
     chars = spec["characters"]
     work = Path(tempfile.mkdtemp(prefix="cartoon_"))
     lines = spec["lines"]
-    results = await asyncio.gather(*[
-        _tts(l["text"], chars[l["who"]]["voice"], l.get("rate", "-2%"), chars[l["who"]].get("pitch", "+0Hz"), work / f"v{i}.mp3")
-        for i, l in enumerate(lines)])
+    results = await asyncio.gather(*[_voice(i, l, chars, work) for i, l in enumerate(lines)])
 
     bgs: dict[str, Image.Image] = {}
     silence = lambda d: AudioClip(lambda t: np.zeros((np.size(t), 2)), duration=d, fps=44100)
