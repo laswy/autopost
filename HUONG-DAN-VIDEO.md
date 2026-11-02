@@ -68,3 +68,22 @@ Quy ước:
 ## 7. BÀI HỌC CỦA CÒ
 Cò ghi thêm bên dưới, mỗi bài một số. Agent đọc từ trên xuống và làm theo.
 1. (trống, chờ Cò dạy)
+
+## 8. PHONG CÁCH MỚI: NGƯỜI QUE + THẺ TIÊU ĐỀ (ưu tiên hơn kiểu hai người nói chuyện qua lại)
+Lý do đổi: kiểu hai nhân vật thoại qua lại bị chán. Kiểu mới là một giọng dẫn duy nhất (giọng Cò), hình minh họa đổi liên tục theo từng ý, phụ đề tô vàng từ khóa. Máy dựng: `skills/explainer_video.py`.
+
+Đặc điểm lấy từ video mẫu (banlinhmem):
+1. Nền pastel phẳng đổi màu theo từng ý: mint, peach, lavender, cream, pink, green, blue; cảnh chốt nền tối (dark).
+2. Người que đen, đầu tròn, hai chấm mắt trắng, 1 đến 3 người; một người có thể đổi màu nhấn kèm vòng tròn mờ.
+3. Thẻ tiêu đề trắng viền mảnh, chữ hoa đậm màu nhấn, dấu "=" nhỏ bên dưới.
+4. Icon đơn giản (đồng hồ, tim, tiền, bóng đèn, cầu thang, cốc trà, điện thoại...), bong bóng nói hoặc nghĩ.
+5. Phụ đề khối trắng bo tròn, 3 đến 6 chữ mỗi cụm, từ khóa tô vàng (đặt trong dấu *sao*).
+6. Mỗi cảnh 4 đến 8 giây, 7 đến 10 cảnh cho video 40 đến 60 giây.
+
+Cách làm:
+1. Viết lời dẫn ngôi thứ ba, ngắn, mỗi cảnh một ý, 15 đến 25 chữ. Cảnh đầu nêu tình huống, cảnh cuối mời đọc truyện trên Đọc Đêm.
+2. Viết spec (mẫu ở đầu tệp `skills/explainer_video.py`). Mỗi cảnh có: text, title (3 đến 5 chữ hoa), palette (đổi màu mỗi cảnh), figures (pose: stand, point_r, point_l, wave, hands_up, shrug, think, sad), props, bubble tuỳ chọn.
+3. Có giọng Cò: tạo tệp wav cho từng cảnh bằng OmniVoice, ghi đường dẫn vào `audio` của cảnh. Không có thì bỏ trống, máy dùng edge-tts.
+4. Dựng: `python3 -m skills.explainer_video spec.json output/<ten>.mp4`.
+5. Kiểm tra: ffprobe, trích 5 khung hình, xem thẻ tiêu đề không che nhân vật, bong bóng không đè đầu, phụ đề không tràn, thẻ nền tối đọc được.
+Quy tắc: không dùng cảnh hai người nói qua lại liên tiếp quá 2 cảnh; mỗi cảnh phải có hình đổi so với cảnh trước.
