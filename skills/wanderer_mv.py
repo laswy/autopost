@@ -181,9 +181,6 @@ class MV:
                 d.rectangle([x, y - 96, x + 84, y], fill=(238, 238, 244, 255), outline=INK, width=3)
                 d.rectangle([x + 8, y - 70, x + 76, y - 30], fill=(214, 60, 60, 255))
         d.rectangle([0, 1320, W, 1400], fill=(122, 82, 56, 255), outline=INK, width=6)
-        d.rectangle([420, 1150, 650, 1320], fill=(250, 250, 252, 255), outline=INK, width=6)
-        d.rectangle([436, 1190, 634, 1290], fill=(214, 60, 60, 255))
-        d.text((535, 1240), "BÚN TƯƠI", font=_font(38), fill=WHITE, anchor="mm")
         return im
 
     def bg_factory(self):
@@ -245,6 +242,24 @@ class MV:
                 d.rectangle([x + 10, y - 84, x + 80, y - 40], fill=(250, 244, 230, 255))
         d.rectangle([0, 1180, W, 1360], fill=(126, 84, 56, 255), outline=INK, width=6)
         d.rectangle([0, 1360, W, H], fill=(176, 136, 100, 255))
+        return im
+
+    def bg_pond(self):
+        im = grad((150, 214, 255), (236, 248, 255), 0, 800)
+        d = ImageDraw.Draw(im, "RGBA")
+        cloud(d, 240, 300, 1.8)
+        cloud(d, 820, 520, 1.3)
+        d.polygon([(0, 900), (200, 740), (460, 880), (760, 720), (1080, 880), (1080, 1000), (0, 1000)], fill=(100, 160, 120, 255))
+        for x in (80, 330, 620, 940):
+            tree(d, x, 1010, 1.1)
+        d.rectangle([0, 1000, W, H], fill=(70, 150, 190, 255))
+        for y in range(1040, H, 46):
+            for x in range(-40, W, 150):
+                d.arc([x + (y % 92), y, x + 90 + (y % 92), y + 24], 200, 340, fill=(190, 232, 250, 180), width=4)
+        d.rectangle([0, 1160, W, 1230], fill=(150, 104, 66, 255), outline=INK, width=6)
+        for x in range(0, W, 140):
+            d.line([(x, 1160), (x, 1230)], fill=(110, 74, 44, 255), width=5)
+        d.rectangle([0, 1230, W, 1330], fill=(40, 100, 140, 150))
         return im
 
     def bg_workshop(self):
@@ -449,9 +464,6 @@ class MV:
     def sc07(self, t, lo):                                                  # 28 đến 33: sản vật quê nhà
         im = self.bg("shop").copy()
         d = ImageDraw.Draw(im, "RGBA")
-        d.rectangle([380, 1010, 700, 1290], fill=(250, 250, 252, 255), outline=INK, width=7)
-        d.rectangle([400, 1060, 680, 1240], fill=(214, 60, 60, 255))
-        d.text((540, 1150), "BÚN TƯƠI SẤY", font=_font(52), fill=WHITE, anchor="mm")
         d.rectangle([0, 1290, W, 1330], fill=(126, 84, 56, 255))
         if lo < 2.4:
             P = shoulder(t, 170, 1580, 780)
@@ -468,18 +480,50 @@ class MV:
             graffiti(im, "QUÊ NHÀ", 540, 520, 190, (255, 90, 140, 255), 5, ss((lo - 2.7) / 0.3))
         return im
 
-    def sc08(self, t, lo):                                                  # 33 đến 37: lao động và sáng tạo
-        im = self.bg("workshop").copy()
+    def fish(self, d, x, y, s, t, n=0):
+        by = y + math.sin(t * 3 + n) * 6
+        d.ellipse([x - 60 * s, by - 24 * s, x + 60 * s, by + 24 * s], fill=(214, 226, 238, 255), outline=INK, width=3)
+        d.polygon([(x + 56 * s, by), (x + 96 * s, by - 26 * s), (x + 96 * s, by + 26 * s)], fill=(184, 204, 224, 255), outline=INK)
+        d.line([(x - 40 * s, by - 8 * s), (x - 28 * s, by + 4 * s)], fill=INK, width=4)
+        d.line([(x - 40 * s, by + 4 * s), (x - 28 * s, by - 8 * s)], fill=INK, width=4)
+        d.line([(x - 52 * s, by + 8 * s), (x - 30 * s, by + 14 * s)], fill=INK, width=3)
+        for m in range(3):
+            a_ = t * 6 + m * 2.1 + n
+            note(d, x - 20 * s + math.cos(a_) * 56 * s, by - 56 * s + math.sin(a_) * 10 * s, 12 * s, (255, 224, 80, 255))
+
+    def bolt(self, im, x0, y0, t, big=1.0):
+        d = ImageDraw.Draw(im, "RGBA")
+        rnd = np.random.RandomState(int(t * 24) % 97)
+        pts = [(x0, y0)]
+        for i in range(1, 6):
+            pts.append((x0 + rnd.randint(-70, 70) * big, y0 + i * 40 * big))
+        d.line(pts, fill=(255, 255, 255, 255), width=int(16 * big), joint="curve")
+        d.line(pts, fill=(120, 220, 255, 255), width=int(7 * big), joint="curve")
+        d.ellipse([x0 - 90 * big, y0 + 70 * big, x0 + 90 * big, y0 + 130 * big], outline=(190, 240, 255, 220), width=6)
+
+    def sc08(self, t, lo):                                                  # 33 đến 37: chích điện bắt cá
+        im = self.bg("pond").copy()
+        d = ImageDraw.Draw(im, "RGBA")
         b = self.beat(t)
-        P = base(760, 1500, 700, torso=10, aL1=60, aL2=64, aR1=74, aR2=72, lL1=8, lR1=-8, head=4 * math.sin(t * 10))
-        pw = self.fig(im, self.worker, P, t, "neutral", ("drill",), fh=700, face=-1)
-        if b < 0.5:
-            sparks(im, pw["hR"][0] - 90, pw["hR"][1], t)
-        Q = headbop(t * 2, 250, 1580, 640)
-        Q["aR1"], Q["aR2"] = 74, 84
-        pq = self.fig(im, self.b, Q, t, "hype", ("goggles", "drill"), fh=640, face=1)
-        if b < 0.5:
-            sparks(im, pq["hR"][0] + 90, pq["hR"][1], t, (120, 230, 255))
+        zap = b < 0.4
+        n_f = min(6, int(lo * 1.8))
+        for n in range(n_f):                                               # cá ngửa bụng nổi lên
+            self.fish(d, 130 + n * 165 + (n % 2) * 40, 1290 + (n % 3) * 90, 0.9 + 0.12 * (n % 2), t, n)
+        sh = (math.sin(t * 60) * 9) if zap else 0
+        P = base(780 + sh, 1200, 700, torso=8, aL1=70, aL2=70, aR1=84, aR2=74, lL1=6, lR1=-6, head=4 * math.sin(t * 8))
+        pw = self.fig(im, self.worker, P, t, "wow" if zap else "smile", ("zapper",), fh=700, face=-1)
+        k = 700 / 330
+        tipw = (pw["hR"][0] - 110 * k, pw["hR"][1] + 190 * k)
+        Q = headbop(t * 2, 250 + (math.sin(t * 70) * 10 if zap else 0), 1200, 640)
+        Q["aR1"], Q["aR2"] = 84, 74
+        pq = self.fig(im, self.b, Q, t, "wow" if zap else "hype", ("goggles", "zapper"), fh=640, face=1)
+        k2 = 640 / 330
+        tipq = (pq["hR"][0] + 110 * k2, pq["hR"][1] + 190 * k2)
+        if zap:
+            self.bolt(im, tipw[0], tipw[1], t)
+            self.bolt(im, tipq[0], tipq[1], t + 0.02)
+            if b < 0.12:
+                graffiti(im, "ZZZT!", 540, 380, 200, (255, 236, 80, 255), -7, ss(b / 0.05))
         return im
 
     def sc09(self, t, lo):                                                  # 37 đến 42: nụ cười quê hương
@@ -543,8 +587,8 @@ class MV:
         if t < 48.1:
             P = shoulder(t * 1.5, 280, 1580, 700)
             P["aR1"], P["aR2"] = 130 + 40 * math.sin(t * 12), 150
-            self.fig(im, self.b, P, t, "hype", ("goggles", "drill"), fh=700, face=1)
-            self.fig(im, self.worker, shoulder(t, 780, 1500, 700), t, "smile", ("drill",), fh=700, face=-1)
+            self.fig(im, self.b, P, t, "hype", ("goggles", "zapup"), fh=700, face=1)
+            self.fig(im, self.worker, shoulder(t, 780, 1500, 700), t, "smile", ("zapup",), fh=700, face=-1)
         else:
             self.fig(im, self.b, freeze(300, 1580, 700, 1), t, "joy", ("shades",), fh=700, face=1)
             self.fig(im, self.worker, freeze(780, 1500, 700, -1), t, "joy", fh=700, face=-1)

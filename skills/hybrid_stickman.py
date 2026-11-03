@@ -119,12 +119,17 @@ class Wanderer(Char):
                 d.line([base, mid, end], fill=WHITE if pass_ == 0 else BLACK, width=int(9 * k + 4) if pass_ == 0 else int(6 * k + 2), joint="curve")
         d.ellipse([hx - r - 3, hy - r - 3, hx + r + 3, hy + r + 3], fill=WHITE)
         d.ellipse([hx - r, hy - r, hx + r, hy + r], fill=BLACK)
-        if self.girl:                                                # hai chỏm tóc
+        if self.girl and not self.hairnet:                           # hai chỏm tóc
             for sgn in (-1, 1):
                 cx_, cy_ = hx + sgn * r * 0.85, hy - r * 0.85
                 d.ellipse([cx_ - 14 * k, cy_ - 14 * k, cx_ + 14 * k, cy_ + 14 * k], fill=BLACK, outline=WHITE, width=3)
-        if self.hairnet:
-            d.ellipse([hx - r * 1.08, hy - r * 1.18, hx + r * 1.08, hy + r * 0.2], fill=(244, 244, 248, 235), outline=WHITE)
+        if self.hairnet:                                              # lưới trùm tóc + búi sau gáy
+            bx, by = hx - fd * r * 0.95, hy - r * 0.55
+            d.ellipse([bx - 0.42 * r, by - 0.42 * r, bx + 0.42 * r, by + 0.42 * r], fill=(40, 38, 44, 255), outline=(240, 240, 246, 255), width=3)
+            d.pieslice([hx - r * 1.06, hy - r * 1.06, hx + r * 1.06, hy + r * 1.06], 185, 355, fill=(236, 236, 244, 215), outline=(255, 255, 255, 255), width=3)
+            for a_ in range(200, 350, 25):
+                d.line([(hx, hy - r * 0.2), (hx + math.cos(rad(a_)) * r * 1.02, hy + math.sin(rad(a_)) * r * 1.02)], fill=(150, 150, 170, 170), width=2)
+            d.arc([hx - r * 0.6, hy - r * 0.8, hx + r * 0.6, hy + r * 0.4], 190, 350, fill=(150, 150, 170, 170), width=2)
         if self.cap:
             d.pieslice([hx - r * 1.05, hy - r * 1.15, hx + r * 1.05, hy + r * 0.85], 180, 360, fill=(30, 30, 36, 255), outline=WHITE)
             d.polygon([(hx + fd * r * 0.6, hy - r * 0.3), (hx + fd * r * 1.6, hy - r * 0.15), (hx + fd * r * 0.6, hy - r * 0.05)], fill=(30, 30, 36, 255), outline=WHITE)
@@ -190,6 +195,19 @@ class Wanderer(Char):
             d.line([bit, (bit[0] + fd * 28 * k, bit[1])], fill=(210, 210, 220, 255), width=4)
             for n in range(3):
                 d.line([(bit[0] + fd * 28 * k, bit[1] + (n - 1) * 8 * k * math.sin(t * 40)), (bit[0] + fd * 46 * k, bit[1] + (n - 1) * 12 * k)], fill=(255, 220, 120, 200), width=2)
+        elif kind in ("zapper", "zapup"):
+            vx, vy = (fd * 110 * k, 190 * k) if kind == "zapper" else (fd * 40 * k, -230 * k)
+            tip = (h[0] + vx, h[1] + vy)
+            d.line([(h[0] - vx * 0.12, h[1] - vy * 0.12), tip], fill=(120, 84, 50, 255), width=int(9 * k))
+            d.line([(h[0] - vx * 0.12, h[1] - vy * 0.12), (h[0] + vx * 0.25, h[1] + vy * 0.25)], fill=(214, 40, 48, 255), width=int(13 * k))
+            n_ = math.hypot(vx, vy)
+            ux, uy = vx / n_, vy / n_
+            for sg in (-1, 1):
+                p2 = (tip[0] - uy * sg * 22 * k + ux * 34 * k, tip[1] + ux * sg * 22 * k + uy * 34 * k)
+                d.line([tip, p2], fill=(200, 200, 212, 255), width=int(5 * k))
+                if (t * 18) % 1 < 0.6:
+                    q = (p2[0] + ux * 14 * k, p2[1] + uy * 14 * k)
+                    d.line([p2, ((p2[0] + q[0]) / 2 + sg * 8 * k, (p2[1] + q[1]) / 2 - 6 * k), q], fill=(130, 230, 255, 255), width=int(4 * k))
         elif kind == "magnifier":
             c = (h[0] + fd * 36 * k, h[1] - 20 * k)
             d.line([h, c], fill=BLACK, width=int(8 * k))
