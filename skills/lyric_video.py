@@ -3,7 +3,7 @@ Lyric video kiểu người que (9:16) cho một bài hát có sẵn.
 
 Chạy:
     python -m skills.lyric_video spec.json out.mp4            # có lyric
-    python -m skills.lyric_video spec.json out_clean.mp4 --no-lyrics   # bản không chữ, để tự khớp lời ở CapCut
+    python -m skills.lyric_video spec.json out_clean.mp4 --clean       # chỉ hình và nhạc, không lời, không watermark
 spec.json:
     {"audio": "song.wav", "duration": 30.0, "handle": "@tmadoc", "fade_out": 0.8,
      "sections": [{"start": 0, "end": 7.5, "kind": "ride"}, ...],
@@ -271,8 +271,9 @@ def render(spec, out_path, with_lyrics=True):
             if ly is not None:
                 im.alpha_composite(ly, (0, int(H * 0.77)))
         d = ImageDraw.Draw(im, "RGBA")
-        d.rectangle([0, 0, W, 8], fill=(255, 255, 255, 60))
-        d.rectangle([0, 0, int(W * min(1.0, t / dur)), 8], fill=(240, 60, 90, 255))
+        if spec.get("progress", True):
+            d.rectangle([0, 0, W, 8], fill=(255, 255, 255, 60))
+            d.rectangle([0, 0, int(W * min(1.0, t / dur)), 8], fill=(240, 60, 90, 255))
         if handle:
             d.text((W - 36, H - 70), handle, font=_font(34), fill=(255, 255, 255, 190), anchor="rm")
         a = 1.0
@@ -302,4 +303,7 @@ def to_lrc(spec, path):
 
 if __name__ == "__main__":
     spec = json.load(open(sys.argv[1], encoding="utf-8"))
-    print(render(spec, sys.argv[2], with_lyrics="--no-lyrics" not in sys.argv))
+    if "--clean" in sys.argv:                      # chỉ hình và nhạc: không lời, không watermark, không thanh tiến độ
+        spec["handle"] = ""
+        spec["progress"] = False
+    print(render(spec, sys.argv[2], with_lyrics=not ({"--no-lyrics", "--clean"} & set(sys.argv))))
