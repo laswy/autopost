@@ -37,6 +37,7 @@ class Wanderer(Char):
     def __init__(self, girl=False, fh=330, face=1):
         super().__init__("woman" if girl else "man", fh=fh, face=face)
         self.girl = girl
+        self.headphones, self.hairnet, self.cap, self.glasses, self.pants = True, False, False, False, BLACK
         self.cup = (255, 120, 170, 255) if girl else ORANGE
         self.hood = RED if girl else BLACK
         self.TH, self.SH, self.TO = 0.24 * fh, 0.24 * fh, 0.27 * fh
@@ -109,7 +110,7 @@ class Wanderer(Char):
         r = self.HR
         th = pts["th"]
         # 3 sợi tóc rối ngả trái
-        for n, (ang, ln) in enumerate(((-108, 1.0), (-92, 1.3), (-76, 0.9))):
+        for n, (ang, ln) in enumerate(() if (self.hairnet or self.cap) else ((-108, 1.0), (-92, 1.3), (-76, 0.9))):
             a = rad(ang) + th * 0.4
             base = (hx + math.cos(a) * r * 0.92, hy + math.sin(a) * r * 0.92)
             mid = (base[0] - 14 * k + math.sin(t * 9 + n) * 3, base[1] - 18 * k * ln)
@@ -122,12 +123,21 @@ class Wanderer(Char):
             for sgn in (-1, 1):
                 cx_, cy_ = hx + sgn * r * 0.85, hy - r * 0.85
                 d.ellipse([cx_ - 14 * k, cy_ - 14 * k, cx_ + 14 * k, cy_ + 14 * k], fill=BLACK, outline=WHITE, width=3)
+        if self.hairnet:
+            d.ellipse([hx - r * 1.08, hy - r * 1.18, hx + r * 1.08, hy + r * 0.2], fill=(244, 244, 248, 235), outline=WHITE)
+        if self.cap:
+            d.pieslice([hx - r * 1.05, hy - r * 1.15, hx + r * 1.05, hy + r * 0.85], 180, 360, fill=(30, 30, 36, 255), outline=WHITE)
+            d.polygon([(hx + fd * r * 0.6, hy - r * 0.3), (hx + fd * r * 1.6, hy - r * 0.15), (hx + fd * r * 0.6, hy - r * 0.05)], fill=(30, 30, 36, 255), outline=WHITE)
+        if self.glasses:
+            for cx_ in (hx + fd * r * 0.20, hx + fd * r * 0.65):
+                d.ellipse([cx_ - 14 * k, hy - 12 * k, cx_ + 14 * k, hy + 16 * k], outline=(220, 220, 230, 255), width=3)
         # tai nghe
         hb = [(hx + math.cos(rad(a)) * (r + 6 * k), hy + math.sin(rad(a)) * (r + 6 * k)) for a in range(-170, -9, 10)]
-        d.line(hb, fill=(120, 120, 130, 255), width=int(7 * k + 2), joint="curve")
-        for sgn in (-1, 1):
-            cx_, cy_ = hx + sgn * (r + 4 * k), hy - 2 * k
-            d.rounded_rectangle([cx_ - 9 * k, cy_ - 16 * k, cx_ + 9 * k, cy_ + 16 * k], 6, fill=self.cup, outline=WHITE, width=2)
+        if self.headphones:
+            d.line(hb, fill=(120, 120, 130, 255), width=int(7 * k + 2), joint="curve")
+            for sgn in (-1, 1):
+                cx_, cy_ = hx + sgn * (r + 4 * k), hy - 2 * k
+                d.rounded_rectangle([cx_ - 9 * k, cy_ - 16 * k, cx_ + 9 * k, cy_ + 16 * k], 6, fill=self.cup, outline=WHITE, width=2)
         # mặt: mắt nhỏ, lông mày lệch
         e1 = (hx + fd * r * 0.20, hy + r * 0.06)
         e2 = (hx + fd * r * 0.62, hy + r * 0.06)
