@@ -2,6 +2,22 @@
 
 Tệp này là "trí nhớ" của agent chạy trên máy Cò. Agent phải đọc hết tệp này trước khi làm video. Cò dạy thêm bằng cách ghi vào mục "BÀI HỌC CỦA CÒ" ở cuối tệp. Mỗi bài học mới ghi đè mọi điều cũ nếu mâu thuẫn.
 
+## QUY CHUẨN VIDEO BẮT BUỘC (Cò chốt ngày 3/11/2026, mọi video từ nay)
+Cò không chấp nhận video đơn giản kiểu một tư thế đứng yên + thẻ tiêu đề + phụ đề (như `explainer_video.py` bản đầu) hay hai nhân vật nói qua lại (`cartoon_video.py`). Mức tối thiểu là phim ngắn kiểu `skills/story_stickman.py`.
+
+Mỗi video PHẢI có:
+1. Kịch bản phân cảnh viết trước (5 đến 8 cảnh, mỗi cảnh 4 đến 6 giây), mô tả hành động, biểu cảm, bối cảnh, góc máy, ánh sáng. Năm cảnh phải kể thành MỘT câu chuyện liên tục, cùng một nhân vật, cùng phong cách nét vẽ, không phải các hình minh họa rời rạc.
+2. Người que nét mực vẽ tay, có thiết kế riêng cho nhân vật (ví dụ dáng gầy, áo khoác cũ), viền sáng mảnh để đọc được trên nền tối; nhân vật nữ hoặc nhân vật phụ có màu nhận diện cố định, không đổi hình dáng giữa các cảnh.
+3. Bộ khớp thật (xương sống, vai, khuỷu, hông, gối, bàn chân) và chuyển động thật: đạp xe, đi bộ, xoa tay, ngồi gục, loạng choạng, ngã, đứng dậy, phủi áo. Cấm dáng đứng đơn điệu.
+4. Bối cảnh điện ảnh có chiều sâu: nhiều lớp (nhà, cột đèn, mặt đường phản chiếu), ánh sáng tương phản, hạt mưa, sương, trăng, vật dụng kể chuyện (ghế trống, ô bỏ quên, mái hiên).
+5. Chuyển động máy quay trong từng cảnh: tiến, lùi, nhích ngang, rung khi có biến cố. Chuyển động chậm, mềm, không đứng yên như slideshow.
+6. Màu sắc có đường đi cảm xúc (ví dụ xanh lạnh, xám tối rồi sang ánh trăng bạc ở cảnh cuối), chuyển mượt giữa cảnh.
+7. Tỷ lệ 9:16 (1080x1920), 24 fps, mở dần và tắt dần.
+8. Theo mặc định KHÔNG gắn lời và watermark trừ khi Cò yêu cầu; có lời thì dùng `lyric_video.py` hoặc lớp chữ riêng.
+9. Trước khi gửi: trích ít nhất 8 khung hình rải đều, xem từng cảnh, kiểm tra nhân vật nhất quán, không tràn khung, không đứng yên, rồi mới gửi. Nếu chưa đạt thì dựng lại, không gửi bản dở.
+
+Cách làm cho video mới: viết hàm cảnh mới trong `skills/story_stickman.py` (tái dùng `Man`, `woman`, `World`, tư thế `blend`, `walk_pose`, `ik`) thay vì dùng mẫu có sẵn; thêm `kind` mới vào `KINDS` và `CAM`. Không được quay lại các máy dựng cũ làm mặc định.
+
 ## 1. MỤC TIÊU VÀ GIỚI HẠN
 1. Làm video dọc 9:16 (1080x1920, 24 fps), hoạt hình 2D, nhân vật nói thoại, phụ đề trắng viền đen, từ một đoạn hay của truyện trên web "Đọc Đêm".
 2. Chỉ làm video và lưu file. KHÔNG đăng lên TikTok, Facebook, Ayrshare hay mạng xã hội nào. KHÔNG gọi tiktok_upload.py.
@@ -70,7 +86,8 @@ Cò ghi thêm bên dưới, mỗi bài một số. Agent đọc từ trên xuố
 1. (trống, chờ Cò dạy)
 
 ## 8. PHONG CÁCH MỚI: NGƯỜI QUE + THẺ TIÊU ĐỀ (ưu tiên hơn kiểu hai người nói chuyện qua lại)
-Lý do đổi: kiểu hai nhân vật thoại qua lại bị chán. Kiểu mới là một giọng dẫn duy nhất (giọng Cò), hình minh họa đổi liên tục theo từng ý, phụ đề tô vàng từ khóa. Máy dựng: `skills/explainer_video.py`.
+Lưu ý: mục 8 là kiểu cũ, chỉ dùng khi Cò yêu cầu rõ. Mặc định theo QUY CHUẨN VIDEO BẮT BUỘC ở đầu tệp.
+Lý do đổi trước đó: kiểu hai nhân vật thoại qua lại bị chán. Kiểu mới là một giọng dẫn duy nhất (giọng Cò), hình minh họa đổi liên tục theo từng ý, phụ đề tô vàng từ khóa. Máy dựng: `skills/explainer_video.py`.
 
 Đặc điểm lấy từ video mẫu (banlinhmem):
 1. Nền pastel phẳng đổi màu theo từng ý: mint, peach, lavender, cream, pink, green, blue; cảnh chốt nền tối (dark).
