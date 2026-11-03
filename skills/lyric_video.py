@@ -231,7 +231,9 @@ def lyric_layer(spec, t):
     n = len(words)
     st, en = ly["start"], ly["end"]
     wt = ly.get("words") or [[st + (en - st) * 0.62 * i / n, st + (en - st) * 0.62 * i / n + 0.25] for i in range(n)]
-    f = _font(66)
+    base = _font(66)
+    widest = max(sum(base.getlength(w) for w in l.split()) + base.getlength(" ") * (len(l.split()) - 1) for l in lines)
+    f = _font(max(46, int(66 * min(1.0, 940 / widest))))
     lh = 100
     layer = Image.new("RGBA", (W, lh * len(lines) + 60), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
