@@ -51,13 +51,27 @@ def ik(p, q, l1, l2, bend):
     return (p[0] + l1 * math.cos(th), p[1] + l1 * math.sin(th))
 
 
-# ───────────────────────── bộ khớp người que ─────────────────────────
+# ───────────────────────── nhân vật theo bảng thiết kế (assets/nhan-vat-tham-chieu.png) ─────────────────────────
+# Đầu tròn nét chì, mặt tối giản (mắt oval, mày, miệng nhỏ), chân dài mảnh, giày boot, khăn quàng dài, áo khoác rộng, túi đeo.
+# Nam: tóc dựng thưa, khăn đỏ, áo khoác xám nâu cũ, túi nâu. Nữ: búi tóc, khăn hồng đậm, áo khoác hồng nhạt.
 
-class Man:
-    TH, SH, TO, UA, FA, HR = 0.235 * FH, 0.235 * FH, 0.30 * FH, 0.17 * FH, 0.165 * FH, 0.072 * FH
+SKIN = (246, 238, 226, 255)
+LINE = (46, 34, 30, 255)
+STYLE = {
+    "man": {"coat": (100, 92, 84, 255), "coat_d": (54, 48, 46, 255), "scarf": (178, 42, 52, 255), "hair": (58, 40, 30, 255),
+            "boot": (84, 60, 46, 255), "bag": (156, 108, 62, 255)},
+    "woman": {"coat": (236, 170, 194, 255), "coat_d": (158, 92, 116, 255), "scarf": (206, 66, 98, 255), "hair": (68, 46, 38, 255),
+              "boot": (104, 70, 62, 255), "bag": (176, 124, 82, 255)},
+}
 
-    def __init__(self):
-        pass
+
+class Char:
+    def __init__(self, kind="man", fh=None, face=1):
+        fh = fh or FH
+        self.kind, self.fh, self.face = kind, fh, face
+        self.TH, self.SH, self.TO = 0.235 * fh, 0.235 * fh, 0.26 * fh
+        self.UA, self.FA, self.HR = 0.16 * fh, 0.15 * fh, 0.092 * fh
+        self.st = STYLE[kind]
 
     def pts(self, P):
         hx, hy = P["hx"], P["hy"]
@@ -67,14 +81,14 @@ class Man:
         sh = (hx + u[0] * self.TO * 0.93, hy + u[1] * self.TO * 0.93)
         neck = (hx + u[0] * self.TO, hy + u[1] * self.TO)
         th = t + rad(P.get("head", 0))
-        head = (neck[0] + math.sin(th) * (self.HR + 8), neck[1] - math.cos(th) * (self.HR + 8))
-        out = {"hip": hip, "sh": sh, "neck": neck, "head": head, "t": t}
+        head = (neck[0] + math.sin(th) * (self.HR + 10), neck[1] - math.cos(th) * (self.HR + 10))
+        out = {"hip": hip, "sh": sh, "neck": neck, "head": head, "t": t, "th": th}
         for side in ("L", "R"):
             a1, a2 = rad(P[f"a{side}1"]), rad(P[f"a{side}2"])
             e = (sh[0] + math.sin(a1) * self.UA, sh[1] + math.cos(a1) * self.UA)
             h_ = (e[0] + math.sin(a2) * self.FA, e[1] + math.cos(a2) * self.FA)
             out[f"e{side}"], out[f"h{side}"] = e, h_
-            if f"fx{side}" in P:                                    # chân theo đích (đạp xe)
+            if f"fx{side}" in P:
                 foot = (P[f"fx{side}"], P[f"fy{side}"])
                 knee = ik(hip, foot, self.TH, self.SH, P.get("kneebend", 1))
             else:
@@ -82,94 +96,184 @@ class Man:
                 knee = (hip[0] + math.sin(l1) * self.TH, hip[1] + math.cos(l1) * self.TH)
                 foot = (knee[0] + math.sin(l2) * self.SH, knee[1] + math.cos(l2) * self.SH)
             out[f"k{side}"], out[f"f{side}"] = knee, foot
-        if "hand_target" in P:                                      # tay bám ghi đông
+        if "hand_target" in P:
             tx, ty = P["hand_target"]
             for side in ("L", "R"):
                 out[f"h{side}"] = (tx, ty)
                 out[f"e{side}"] = ik(sh, (tx, ty), self.UA, self.FA, -1)
         return out
 
-    def draw(self, im, P, seed=0):
+    # ───── vẽ ─────
+    def draw(self, im, P, seed=0, t=0.0, expr="neutral", vel=0.0, face=None, rim=True):
+        fd = face if face is not None else self.face
         pts = self.pts(P)
         rnd = np.random.RandomState(seed)
-
-        def jit(p, a=1.6):
-            return (p[0] + rnd.uniform(-a, a), p[1] + rnd.uniform(-a, a))
+        st = self.st
         d = ImageDraw.Draw(im, "RGBA")
+        k = self.fh / 640.0
 
-        def stroke(seq, w):
-            seq = [jit(p) for p in seq]
-            d.line(seq, fill=RIM, width=w + 7, joint="curve")
+        def jit(p, a=1.5):
+            return (p[0] + rnd.uniform(-a, a), p[1] + rnd.uniform(-a, a))
+
+        def pen(seq, w, col=LINE, halo=False):
+            seq = [jit(p, 1.1) for p in seq]
+            if halo and rim:
+                d.line(seq, fill=(205, 212, 226, 105), width=w + 5, joint="curve")
+            d.line(seq, fill=col, width=w, joint="curve")
             for p in seq:
-                d.ellipse([p[0] - (w + 7) / 2, p[1] - (w + 7) / 2, p[0] + (w + 7) / 2, p[1] + (w + 7) / 2], fill=RIM)
-            d.line(seq, fill=INK, width=w, joint="curve")
-            for p in seq:
-                d.ellipse([p[0] - w / 2, p[1] - w / 2, p[0] + w / 2, p[1] + w / 2], fill=INK)
-        w = 9
-        stroke([pts["hip"], pts["kL"], pts["fL"]], w)
-        stroke([pts["sh"], pts["eL"], pts["hL"]], w - 1)
-        # áo khoác cũ
-        t = pts["t"]
-        u = (math.sin(t), -math.cos(t))
-        pr = (math.cos(t), math.sin(t))
-        shd = (pts["sh"][0] + u[0] * 6, pts["sh"][1] + u[1] * 6)
-        poly = [(shd[0] + pr[0] * 0.075 * FH, shd[1] + pr[1] * 0.075 * FH),
-                (shd[0] - pr[0] * 0.075 * FH, shd[1] - pr[1] * 0.075 * FH),
-                (pts["hip"][0] - pr[0] * 0.07 * FH - u[0] * 0.06 * FH, pts["hip"][1] - pr[1] * 0.07 * FH - u[1] * 0.06 * FH),
-                (pts["hip"][0] + pr[0] * 0.07 * FH - u[0] * 0.06 * FH, pts["hip"][1] + pr[1] * 0.07 * FH - u[1] * 0.06 * FH)]
-        poly = [jit(p, 1.2) for p in poly]
-        d.polygon(poly, fill=COAT, outline=INK)
-        d.line(poly + [poly[0]], fill=INK, width=5)
-        mid_top = (pts["sh"][0], pts["sh"][1])
-        mid_bot = (pts["hip"][0] - u[0] * 0.05 * FH, pts["hip"][1] - u[1] * 0.05 * FH)
-        d.line([mid_top, mid_bot], fill=(60, 56, 54, 255), width=4)            # đường khuy áo
-        for k in (0.35, 0.6):
-            bx = mid_top[0] + (mid_bot[0] - mid_top[0]) * k
-            by = mid_top[1] + (mid_bot[1] - mid_top[1]) * k
-            d.ellipse([bx - 4, by - 4, bx + 4, by + 4], fill=(30, 28, 28, 255))
-        d.line([(pts["sh"][0] - pr[0] * 28, pts["sh"][1] - pr[1] * 28), (pts["neck"][0], pts["neck"][1]),
-                (pts["sh"][0] + pr[0] * 28, pts["sh"][1] + pr[1] * 28)], fill=(70, 66, 62, 255), width=6)  # cổ áo
-        stroke([pts["hip"], pts["kR"], pts["fR"]], w)
-        stroke([pts["sh"], pts["eR"], pts["hR"]], w - 1)
+                d.ellipse([p[0] - w / 2, p[1] - w / 2, p[0] + w / 2, p[1] + w / 2], fill=col)
+
+        def leg(side):
+            pen([pts["hip"], pts[f"k{side}"], pts[f"f{side}"]], max(6, int(8 * k)), (22, 20, 24, 255), halo=True)
+            fx, fy = pts[f"f{side}"]
+            bt = [(fx - 12 * fd * k, fy - 34 * k), (fx + 9 * fd * k, fy - 34 * k), (fx + 9 * fd * k, fy - 6 * k),
+                  (fx + 40 * fd * k, fy + 5 * k), (fx + 36 * fd * k, fy + 18 * k), (fx - 15 * fd * k, fy + 18 * k)]
+            bt = [jit(p, 1.0) for p in bt]
+            d.polygon(bt, fill=st["boot"])
+            d.line(bt + [bt[0]], fill=LINE, width=4)
+            d.line([(fx - 12 * fd * k, fy + 4 * k), (fx + 28 * fd * k, fy + 4 * k)], fill=(40, 30, 26, 255), width=3)
+
+        def arm(side):
+            sh_ = pts["sh"]
+            e_, h_ = pts[f"e{side}"], pts[f"h{side}"]
+            w1, w2 = max(14, int(30 * k)), max(12, int(25 * k))
+            pen([sh_, e_], w1 + 5, LINE)
+            pen([e_, h_], w2 + 5, LINE)
+            d.line([jit(p, 0.8) for p in (sh_, e_)], fill=st["coat"], width=w1, joint="curve")
+            d.line([jit(p, 0.8) for p in (e_, h_)], fill=st["coat"], width=w2, joint="curve")
+            d.ellipse([e_[0] - w1 / 2, e_[1] - w1 / 2, e_[0] + w1 / 2, e_[1] + w1 / 2], fill=st["coat"])
+            hr = 11 * k + 2
+            d.ellipse([h_[0] - hr, h_[1] - hr, h_[0] + hr, h_[1] + hr], fill=SKIN, outline=LINE, width=3)
+
+        leg("L")
+        arm("L")
+        # áo khoác rộng, loe, tới giữa đùi
+        tt = pts["t"]
+        u = (math.sin(tt), -math.cos(tt))
+        pr = (math.cos(tt), math.sin(tt))
+        shd = (pts["sh"][0] + u[0] * 8, pts["sh"][1] + u[1] * 8)
+        hem_c = (pts["hip"][0] - u[0] * 0.15 * self.fh, pts["hip"][1] - u[1] * 0.15 * self.fh)
+        sw = 0.095 * self.fh
+        fl = 0.16 * self.fh + math.sin(t * 2.0) * 3 * k
+        poly = [(shd[0] + pr[0] * sw, shd[1] + pr[1] * sw), (shd[0] - pr[0] * sw, shd[1] - pr[1] * sw),
+                (hem_c[0] - pr[0] * fl, hem_c[1] - pr[1] * fl), (hem_c[0] + pr[0] * fl, hem_c[1] + pr[1] * fl)]
+        poly = [jit(p, 1.3) for p in poly]
+        d.polygon(poly, fill=st["coat"])
+        for n in range(26):                                          # nét chì đan chéo cho chất vải cũ
+            a = rnd.uniform(0.05, 0.95)
+            b = rnd.uniform(0.05, 0.95)
+            p0 = (poly[0][0] + (poly[3][0] - poly[0][0]) * b, poly[0][1] + (poly[3][1] - poly[0][1]) * b)
+            p1 = (poly[1][0] + (poly[2][0] - poly[1][0]) * b, poly[1][1] + (poly[2][1] - poly[1][1]) * b)
+            q = (p0[0] + (p1[0] - p0[0]) * a, p0[1] + (p1[1] - p0[1]) * a)
+            d.line([q, (q[0] + 12 * pr[0] - 4 * u[0], q[1] + 12 * pr[1] - 4 * u[1])], fill=st["coat_d"][:3] + (110,), width=2)
+        d.line(poly + [poly[0]], fill=LINE, width=4)
+        mid_top = (pts["sh"][0] + u[0] * 4, pts["sh"][1] + u[1] * 4)
+        d.line([mid_top, hem_c], fill=st["coat_d"], width=3)
+        for kk in (0.25, 0.5, 0.75):
+            bx = mid_top[0] + (hem_c[0] - mid_top[0]) * kk
+            by = mid_top[1] + (hem_c[1] - mid_top[1]) * kk
+            d.ellipse([bx - 5, by - 5, bx + 5, by + 5], fill=(34, 28, 26, 255))
+        pk = (pts["hip"][0] + pr[0] * 0.07 * self.fh - u[0] * 0.05 * self.fh, pts["hip"][1] + pr[1] * 0.07 * self.fh - u[1] * 0.05 * self.fh)
+        d.line([pk, (pk[0] + 36 * pr[0], pk[1] + 36 * pr[1])], fill=st["coat_d"], width=3)          # túi áo
+        leg("R")
+        # dây túi đeo chéo và túi
+        strap = [(pts["sh"][0] - pr[0] * sw * 0.7, pts["sh"][1] - pr[1] * sw * 0.7), (pts["hip"][0] + pr[0] * 0.10 * self.fh - u[0] * 0.06 * self.fh, pts["hip"][1] + pr[1] * 0.10 * self.fh - u[1] * 0.06 * self.fh)]
+        d.line(strap, fill=st["bag"], width=max(6, int(9 * k)))
+        bx0, by0 = strap[1]
+        sw_ = math.sin(t * 2.4 + 1) * 5 * k
+        bag = [(bx0 - 36 * k + sw_, by0), (bx0 + 36 * k + sw_, by0), (bx0 + 38 * k + sw_, by0 + 52 * k), (bx0 - 38 * k + sw_, by0 + 52 * k)]
+        d.polygon(bag, fill=st["bag"], outline=LINE)
+        d.line(bag + [bag[0]], fill=LINE, width=3)
+        d.line([(bx0 - 30 * k + sw_, by0 + 18 * k), (bx0 + 30 * k + sw_, by0 + 18 * k)], fill=(104, 70, 40, 255), width=3)
+        arm("R")
+        # khăn quàng đỏ: vòng cổ + đuôi dài bay theo gió
+        nk = pts["neck"]
+        ring = [(nk[0] - 30 * k, nk[1] - 4), (nk[0], nk[1] + 12 * k), (nk[0] + 30 * k, nk[1] - 4)]
+        pen(ring, int(30 * k), st["scarf"])
+        wind = 1.0 + vel * 1.4
+        tail = []
+        for n in range(7):
+            a = n / 6
+            tail.append((nk[0] - fd * (16 + a * 150 * wind) * k + (fd * 8 if n == 0 else 0),
+                         nk[1] + 12 * k + a * 80 * k + math.sin(t * 4.2 + n * 0.9) * (4 + a * 16) * k))
+        pen(tail, int(24 * k), st["scarf"])
+        pen(tail, int(24 * k) + 2, LINE) if False else None
+        ex, ey = tail[-1]
+        for n in range(-2, 3):
+            d.line([(ex + n * 5, ey + 4), (ex + n * 5 + fd * 6, ey + 24 * k)], fill=st["scarf"], width=4)
         # đầu
         hx, hy = pts["head"]
         r = self.HR
-        d.ellipse([hx - r - 4, hy - r - 4, hx + r + 4, hy + r + 4], fill=RIM)
-        d.ellipse([hx - r, hy - r, hx + r, hy + r], fill=(232, 226, 218, 255), outline=INK, width=5)
+        th = pts["th"]
+        if self.kind == "woman":
+            d.ellipse([hx - r * 0.36 - fd * r * 0.1, hy - r * 1.55, hx + r * 0.36 - fd * r * 0.1, hy - r * 0.95], fill=st["hair"], outline=LINE, width=3)   # búi tóc
+        else:
+            for n in range(8):                                       # tóc dựng thưa
+                a = rad(-100 + n * 18) + th * 0.5 - fd * 0.35
+                pen([(hx - fd * r * 0.2 + math.cos(a) * r * 0.9, hy + math.sin(a) * r * 0.9),
+                     (hx - fd * r * 0.2 + math.cos(a) * r * 1.35 - fd * 8, hy + math.sin(a) * r * 1.35 - 4),
+                     (hx - fd * r * 0.2 + math.cos(a) * r * 1.62 - fd * 14, hy + math.sin(a) * r * 1.6 + 6)], 4, st["hair"])
+        d.ellipse([hx - r - 5, hy - r - 5, hx + r + 5, hy + r + 5], fill=RIM if rim else (0, 0, 0, 0))
+        d.ellipse([hx - r, hy - r, hx + r, hy + r], fill=SKIN)
+        for n in range(2):                                           # viền chì kép
+            q = [(hx + math.cos(a / 12 * 6.283) * (r + rnd.uniform(-2, 2)), hy + math.sin(a / 12 * 6.283) * (r + rnd.uniform(-2, 2))) for a in range(13)]
+            d.line(q, fill=LINE, width=3, joint="curve")
+        if self.kind == "woman":
+            hair_cap = [(hx + fd * r * 0.78, hy - r * 0.32), (hx + fd * r * 0.3, hy - r * 0.97), (hx - fd * r * 0.55, hy - r * 0.97),
+                        (hx - fd * r * 1.02, hy), (hx - fd * r * 0.96, hy + r * 0.62), (hx - fd * r * 0.55, hy + r * 0.2),
+                        (hx - fd * r * 0.1, hy - r * 0.46)]
+            d.polygon([jit(p, 1) for p in hair_cap], fill=st["hair"])
+            for n in range(3):
+                pen([(hx - fd * r * 0.85, hy + r * 0.1 * n), (hx - fd * (r * 1.05 + n * 6) + math.sin(t * 2 + n) * 4, hy + r * (0.9 + n * 0.25))], 4, st["hair"])
+        self.face_draw(d, hx, hy, r, fd, expr, rnd, t)
         return pts
 
+    def face_draw(self, d, hx, hy, r, fd, expr, rnd, t):
+        e1 = (hx + fd * r * 0.22, hy + r * 0.02)
+        e2 = (hx + fd * r * 0.62, hy + r * 0.02)
+        ew, eh = r * 0.11, r * 0.17
+        blink = (t % 3.6) < 0.12
+        brow_a = {"neutral": 0, "sad": 16, "tired": 6, "smile": -8, "surprised": -14, "angry": -22, "pain": 22}.get(expr, 0)
+        for (ex, ey), nth in ((e1, 0), (e2, 1)):
+            if expr == "smile" or expr == "pain" or blink:
+                d.arc([ex - ew * 1.5, ey - eh * 0.4, ex + ew * 1.5, ey + eh * 1.0], 200 if expr != "pain" else 20, 340 if expr != "pain" else 160, fill=LINE, width=4)
+            else:
+                big = 1.35 if expr == "surprised" else 1.0
+                d.ellipse([ex - ew * big, ey - eh * big, ex + ew * big, ey + eh * big], fill=(30, 24, 22, 255))
+                if expr in ("tired", "sad"):
+                    d.rectangle([ex - ew * 1.6, ey - eh * 1.4, ex + ew * 1.6, ey - eh * 0.15], fill=SKIN)      # mí mắt sụp
+                    d.line([(ex - ew * 1.6, ey - eh * 0.15), (ex + ew * 1.6, ey - eh * 0.15)], fill=LINE, width=3)
+            by = ey - eh * 1.9
+            ang = brow_a * (1 if nth == 0 else -1) * fd
+            d.line([(ex - ew * 1.8, by + ang * 0.25), (ex + ew * 1.8, by - ang * 0.25)], fill=LINE, width=3)
+        mx, my = hx + fd * r * 0.42, hy + r * 0.56
+        if expr == "smile":
+            d.arc([mx - r * 0.2, my - r * 0.12, mx + r * 0.2, my + r * 0.16], 10, 170, fill=LINE, width=3)
+        elif expr == "surprised":
+            d.ellipse([mx - r * 0.07, my - r * 0.05, mx + r * 0.07, my + r * 0.13], fill=(60, 30, 30, 255))
+        elif expr in ("sad", "pain"):
+            d.arc([mx - r * 0.16, my - r * 0.02, mx + r * 0.16, my + r * 0.2], 200, 340, fill=LINE, width=3)
+        else:
+            d.line([(mx - r * 0.12, my), (mx + r * 0.12, my + 1)], fill=LINE, width=3)
+        if self.kind == "woman" or expr == "smile":
+            d.ellipse([hx + fd * r * 0.5 - r * 0.2, hy + r * 0.3, hx + fd * r * 0.5 + r * 0.2, hy + r * 0.52], fill=(240, 150, 150, 70))
 
-def woman(im, x, ground, t, glow=True, turn=0.0, pose="stand"):
-    """Bóng người nữ màu hồng nhạt: đầu, tóc dài lay, váy loe lay, tay chân mảnh."""
-    d = ImageDraw.Draw(im, "RGBA")
-    H0 = FH * 0.95
-    sway = math.sin(t * 1.7) * 6
-    hipy = ground - 0.46 * H0
-    sh = (x + sway * 0.3, hipy - 0.30 * H0)
-    head = (x + sway * 0.4 + turn * 14, sh[1] - 0.11 * H0)
-    # tóc
-    hair = []
-    for k in range(9):
-        a = k / 8
-        hair.append((head[0] - 22 + sway * 1.5 * a + turn * 12, head[1] + 8 + a * 0.40 * H0))
-    d.polygon([(head[0] - 30, head[1] - 4), (head[0] + 30, head[1] - 4), (head[0] + 26 + sway * 3, head[1] + 0.35 * H0),
-               (head[0] - 26 + sway * 3, head[1] + 0.38 * H0)], fill=(246, 150, 180, 255))
-    # váy
-    wave = math.sin(t * 2.2) * 9
-    d.polygon([(sh[0] - 34, sh[1] + 20), (sh[0] + 34, sh[1] + 20),
-               (x + 98 + wave, ground - 0.17 * H0), (x - 98 + wave * 0.6, ground - 0.17 * H0)], fill=PINK)
-    d.line([(x - 98 + wave * 0.6, ground - 0.17 * H0), (x + 98 + wave, ground - 0.17 * H0)], fill=(255, 150, 180, 255), width=6)
-    # chân, tay mảnh
-    for sx in (-1, 1):
-        d.line([(x + sx * 22, ground - 0.17 * H0), (x + sx * 24, ground)], fill=PINK, width=9)
-        d.line([(sh[0] + sx * 32, sh[1] + 26), (sh[0] + sx * (40 + sway * 0.5), sh[1] + 0.20 * H0)], fill=PINK, width=8)
-    hr = 0.062 * H0
-    d.ellipse([head[0] - hr, head[1] - hr, head[0] + hr, head[1] + hr], fill=(255, 214, 224, 255))
+
+def woman(im, x, ground, t, glow=True, turn=0.0, scale=1.0, expr=None):
+    """Bóng người nữ (nhân vật nữ trong bảng thiết kế, áo hồng nhạt), quay mặt về phía anh."""
+    ch = Char("woman", fh=FH * 0.97 * scale, face=-1)
+    hipy = ground - 0.47 * ch.fh
+    sway = math.sin(t * 1.5) * 2.5
+    P = {"hx": x + sway, "hy": hipy, "torso": -2 + sway * 0.4, "head": -4 + 10 * turn,
+         "aL1": -6 + math.sin(t * 1.5) * 3, "aL2": -4, "aR1": 10, "aR2": 8,
+         "lL1": 2, "lL2": 0, "lR1": -2, "lR2": 0}
     if glow:
         g = Image.new("RGBA", im.size, (0, 0, 0, 0))
-        ImageDraw.Draw(g).ellipse([x - 230, ground - 0.55 * H0 - 230, x + 230, ground - 0.55 * H0 + 230], fill=(255, 150, 190, 70))
+        ImageDraw.Draw(g).ellipse([x - 240, ground - 0.55 * ch.fh - 240, x + 240, ground - 0.55 * ch.fh + 240], fill=(255, 160, 195, 70))
         im.alpha_composite(g.filter(ImageFilter.GaussianBlur(40)))
-    return head
+    face = -1 if turn < 0.5 else -1
+    pts = ch.draw(im, P, seed=int(t * 8) + 99, t=t, expr=expr or ("smile" if turn > 0.7 else "sad"), vel=0.0, face=face, rim=False)
+    return pts["head"]
 
 
 # ───────────────────────── tư thế ─────────────────────────
@@ -208,7 +312,7 @@ class World:
     def __init__(self, spec):
         self.spec = spec
         self.secs = spec["sections"]
-        self.man = Man()
+        self.man = Char('man')
         self.cache = {}
         rnd = np.random.RandomState(3)
         self.rain = [(rnd.uniform(0, W), rnd.uniform(0, H), rnd.uniform(0.7, 1.3)) for _ in range(160)]
@@ -346,7 +450,7 @@ class World:
         P = {"hx": rx - 6, "hy": GY - 118 - 262 + abs(math.sin(ph)) * 3, "torso": 24, "head": 18,
              "aL1": 0, "aL2": 0, "aR1": 0, "aR2": 0, "fxL": fL[0], "fyL": fL[1], "fxR": fR[0], "fyR": fR[1], "kneebend": 1,
              "hand_target": (rx + 124, GY - 118 - 330)}
-        pts = self.man.draw(im, P, seed)
+        pts = self.man.draw(im, P, seed, t=t, expr="tired", vel=1.0)
         # mồ hôi
         for n in range(4):
             k = (local * 1.3 + n * 0.25) % 1.0
@@ -365,14 +469,14 @@ class World:
         d.line([(560, GY - 590), (560, GY)], fill=(14, 16, 24, 255), width=10)
         # cột đèn xa, bóng hồng
         self.mist(im, t, 110)
-        woman(im, 880, GY, t, True, turn=ss((local - 3.0) / 2.0))
+        woman(im, 880, GY, t, True, turn=ss((local - 3.0) / 2.0), scale=0.86)
         # anh xoa tay vì lạnh, rồi nhìn về phía cô
         rub = math.sin(local * 9) * 6
         look = ss((local - 2.5) / 1.5)
         P = dict(STAND)
         P.update({"hx": 300, "torso": 4 + 6 * look, "head": -6 + 20 * look,
                   "aL1": 60 + rub, "aL2": 118 + rub, "aR1": 54 - rub, "aR2": 110 - rub, "lL1": 3, "lR1": -3})
-        pts = self.man.draw(im, P, seed)
+        pts = self.man.draw(im, P, seed, t=t, expr=("sad" if look < 0.5 else "neutral"), vel=0.0)
         for n in range(5):                                           # hơi thở lạnh
             k = (local * 0.7 + n * 0.2) % 1.0
             hx, hy = pts["head"]
@@ -393,7 +497,7 @@ class World:
         P = dict(SITUP)
         P.update({"hx": 330, "hy": seat_y - 40, "torso": 38 + math.sin(local * 1.5) * 2, "head": 38,
                   "aL1": 100, "aL2": 160, "aR1": 96, "aR2": 150, "lL1": 70, "lL2": 6, "lR1": 62, "lR2": -2})
-        self.man.draw(im, P, seed)
+        self.man.draw(im, P, seed, t=t, expr="sad")
         # dấu hỏi lớn nhỏ rối thành vòng xoáy
         k = ss(local / 3.0)
         cx, cy = 420, GY - 760
@@ -441,7 +545,7 @@ class World:
             P = dict(LYING); P["hx"] = 560 + 12 * k
             P["aR1"] = 150 + 20 * math.sin(local * 3) + 10 * k
             P["aR2"] = 160 + 12 * math.sin(local * 3.4)
-        self.man.draw(im, P, seed)
+        self.man.draw(im, P, seed, t=t, expr=("sad" if local < 1.7 else "pain"), vel=0.4 if local < 1.5 else 0.0)
         if 1.9 < local < 2.6:                                        # bắn nước
             for n in range(9):
                 k = (local - 1.9) / 0.7
@@ -484,7 +588,7 @@ class World:
             k = (local - 3.9)
             x = 520 + k * 110
             P = walk_pose(x, k, lean=4, amp=20, speed=3.6)
-        self.man.draw(im, P, seed)
+        self.man.draw(im, P, seed, t=t, expr=("pain" if local < 1.6 else "tired" if local < 3.9 else "smile" if local > 5.0 else "neutral"), vel=0.5 if local > 3.9 else 0.0)
         # hai bóng kéo dài trên mặt đường
         sx = P["hx"]
         d.polygon([(sx - 8, GY + 6), (sx + 8, GY + 6), (sx - 290, GY + 60), (sx - 330, GY + 60)], fill=(8, 10, 18, 110))

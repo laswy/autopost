@@ -18,6 +18,13 @@ Mỗi video PHẢI có:
 
 Cách làm cho video mới: viết hàm cảnh mới trong `skills/story_stickman.py` (tái dùng `Man`, `woman`, `World`, tư thế `blend`, `walk_pose`, `ik`) thay vì dùng mẫu có sẵn; thêm `kind` mới vào `KINDS` và `CAM`. Không được quay lại các máy dựng cũ làm mặc định.
 
+
+## NHÂN VẬT CHUẨN (Cò chốt ngày 3/11/2026): bảng thiết kế `assets/nhan-vat-tham-chieu.png`
+Mọi video dùng nhân vật theo bảng này: đầu tròn nét chì, mặt tối giản (mắt oval, mày, miệng nhỏ), chân dài mảnh, giày boot, khăn quàng dài, áo khoác rộng, túi đeo chéo.
+1. Nam: tóc dựng thưa, khăn đỏ, áo khoác xám nâu cũ, túi nâu. Nữ: búi tóc, khăn hồng đậm, áo khoác hồng nhạt. Cò cho phép đổi màu áo và kiểu tóc cho hợp truyện, nhưng giữ nguyên tỉ lệ và đường nét.
+2. Hai lớp vẽ đã có sẵn trong `skills/story_stickman.py`: lớp `Char("man" | "woman")` (khớp, áo, khăn bay theo gió, túi đung đưa, nét chì kép) và hàm `woman()`.
+3. Biểu cảm có sẵn: neutral, smile, sad, tired, surprised, angry, pain. Dùng thay đổi biểu cảm theo cảnh, cấm mặt vô cảm suốt video.
+
 ## 1. MỤC TIÊU VÀ GIỚI HẠN
 1. Làm video dọc 9:16 (1080x1920, 24 fps), hoạt hình 2D, nhân vật nói thoại, phụ đề trắng viền đen, từ một đoạn hay của truyện trên web "Đọc Đêm".
 2. Chỉ làm video và lưu file. KHÔNG đăng lên TikTok, Facebook, Ayrshare hay mạng xã hội nào. KHÔNG gọi tiktok_upload.py.
