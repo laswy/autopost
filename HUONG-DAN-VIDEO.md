@@ -87,3 +87,9 @@ Cách làm:
 4. Dựng: `python3 -m skills.explainer_video spec.json output/<ten>.mp4`.
 5. Kiểm tra: ffprobe, trích 5 khung hình, xem thẻ tiêu đề không che nhân vật, bong bóng không đè đầu, phụ đề không tràn, thẻ nền tối đọc được.
 Quy tắc: không dùng cảnh hai người nói qua lại liên tiếp quá 2 cảnh; mỗi cảnh phải có hình đổi so với cảnh trước.
+
+## 9. VIDEO LYRIC CHO BÀI HÁT CÓ SẴN (người que): `skills/lyric_video.py`
+1. Đưa tệp nhạc (wav hoặc mp3) vào `audio` của spec, ghi `sections` (start, end, kind) theo đoạn nhạc và `lyrics` (start, end, lines).
+2. kind có sẵn: ride, ride_cold, sit, stumble, walk_meet. Mỗi kind là một cảnh người que khác nhau, đổi màu trời theo từng đoạn.
+3. Lời chưa chốt thì dựng bản không chữ: `python3 -m skills.lyric_video spec.json clean.mp4 --no-lyrics`, rồi khớp lời ở CapCut. Lời chốt rồi thì sửa mục `lyrics` (có thể thêm `words`: mốc từng chữ) và dựng lại không cờ.
+4. Lấy mốc thời gian lời từ video mẫu: cắt dải chữ mỗi giây bằng ffmpeg `crop`, ghép thành ảnh rồi đọc.
