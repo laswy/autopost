@@ -13,7 +13,7 @@ Phân tích video mẫu (banlinhmem):
 Chạy:
     python -m skills.explainer_video spec.json out.mp4
 spec.json:
-    {"handle": "@docdem", "voice": "vi-VN-HoaiMyNeural", "rate": "-2%", "pitch": "+0Hz",
+    {"handle": "@tmadoc", "voice": "vi-VN-HoaiMyNeural", "rate": "-2%", "pitch": "+0Hz",
      "scenes": [
        {"text": "Nhiều khi *không phải bạn* nói quá nhiều.", "title": "ĐÓN LẤY CÂU CHUYỆN", "palette": "mint",
         "equals": true, "figures": [{"x": 0.3, "pose": "stand"}, {"x": 0.7, "pose": "point_l"}],
